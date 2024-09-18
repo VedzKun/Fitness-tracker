@@ -71,7 +71,7 @@ class User {
 
 // Main class for the fitness tracker UI
 public class FitnessTrackerEnhancedUI extends JFrame {
-    private JTextField durationField;
+    private JTextField exerciseField, durationField;
     private JTextArea outputArea;
     private JComboBox<User> userDropdown;
     private JComboBox<String> exerciseDropdown;
@@ -95,6 +95,7 @@ public class FitnessTrackerEnhancedUI extends JFrame {
         // Create input fields and labels
         JLabel userLabel = new JLabel("Select User:");
         userDropdown = new JComboBox<>();
+        userDropdown.setPreferredSize(new Dimension(150, 30)); // Set size of user dropdown
         userDropdown.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -106,27 +107,25 @@ public class FitnessTrackerEnhancedUI extends JFrame {
         });
 
         JLabel exerciseLabel = new JLabel("Exercise:");
-        // Replacing the text field for exercises with a dropdown
         exerciseDropdown = new JComboBox<>(new String[]{"Walking", "Running", "Yoga", "Sports", "Swimming", "Cycling", "Hiking/Trekking"});
+        exerciseDropdown.setPreferredSize(new Dimension(150, 30)); // Set size of exercise dropdown
 
         JLabel durationLabel = new JLabel("Duration (mins):");
         durationField = new JTextField();
+        durationField.setPreferredSize(new Dimension(150, 30)); // Set size of duration text field
 
         // Add input fields and labels to input panel
-        gbc.gridx = 0;
-        gbc.gridy = 0;
+        gbc.gridx = 0; gbc.gridy = 0;
         inputPanel.add(userLabel, gbc);
         gbc.gridx = 1;
         inputPanel.add(userDropdown, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridx = 0; gbc.gridy = 1;
         inputPanel.add(exerciseLabel, gbc);
         gbc.gridx = 1;
-        inputPanel.add(exerciseDropdown, gbc); // Use dropdown here instead of text field
+        inputPanel.add(exerciseDropdown, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridx = 0; gbc.gridy = 2;
         inputPanel.add(durationLabel, gbc);
         gbc.gridx = 1;
         inputPanel.add(durationField, gbc);
@@ -139,19 +138,17 @@ public class FitnessTrackerEnhancedUI extends JFrame {
         JButton addUserButton = new JButton("Add User");
 
         // Add buttons to input panel
-        gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridx = 0; gbc.gridy = 3;
         inputPanel.add(logButton, gbc);
         gbc.gridx = 1;
         inputPanel.add(progressButton, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridx = 0; gbc.gridy = 4;
         inputPanel.add(clearButton, gbc);
         gbc.gridx = 1;
         inputPanel.add(exportButton, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 5;
+
+        gbc.gridx = 0; gbc.gridy = 5;
         inputPanel.add(addUserButton, gbc);
 
         // Workout history display panel
@@ -216,11 +213,11 @@ public class FitnessTrackerEnhancedUI extends JFrame {
             return;
         }
 
-        String exercise = (String) exerciseDropdown.getSelectedItem(); // Get selected exercise from dropdown
+        String exercise = (String) exerciseDropdown.getSelectedItem();
         String durationText = durationField.getText().trim();
 
-        if (durationText.isEmpty()) {
-            outputArea.setText("Please enter the workout duration.");
+        if (exercise == null || durationText.isEmpty()) {
+            outputArea.setText("Please enter all workout details.");
             return;
         }
 
@@ -302,21 +299,40 @@ public class FitnessTrackerEnhancedUI extends JFrame {
 
     // Method to clear input fields
     private void clearFields() {
+        exerciseField.setText("");
         durationField.setText("");
     }
 
-    // Method to add a user
+    // Method to add a new user
     private void addUser() {
-        String name = JOptionPane.showInputDialog(this, "Enter user name:");
-        if (name != null && !name.trim().isEmpty()) {
-            User newUser = new User(name.trim());
-            users.add(newUser);
-            userDropdown.addItem(newUser);
-            outputArea.setText("User added: " + name);
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+        JTextField nameField = new JTextField();
+
+        panel.add(new JLabel("Name:"));
+        panel.add(nameField);
+
+        int result = JOptionPane.showConfirmDialog(null, panel, "Add New User", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            String name = nameField.getText().trim();
+            if (!name.isEmpty()) {
+                User newUser = new User(name);
+                users.add(newUser);
+                userDropdown.addItem(newUser);
+                outputArea.setText("Member added: " + name);
+            } else {
+                outputArea.setText("Please provide a valid name.");
+            }
         }
     }
 
+    // Main method to start the application
     public static void main(String[] args) {
-        new FitnessTrackerEnhancedUI();
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new FitnessTrackerEnhancedUI();
+            }
+        });
     }
 }
