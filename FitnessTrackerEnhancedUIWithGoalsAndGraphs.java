@@ -5,11 +5,7 @@ import java.awt.event.ActionListener;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Random;
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.data.category.DefaultCategoryDataset;
+import java.util.List;
 
 // Class representing a workout
 class Workout {
@@ -66,20 +62,27 @@ class User {
     public ArrayList<Workout> getWorkoutLog() {
         return workoutLog;
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
 
 // Main class for the fitness tracker UI
-public class FitnessTrackerEnhancedUIWithGoalsAndGraphs extends JFrame {
-    private JTextField nameField, durationField, weeklyDurationGoalField, weeklyCaloriesGoalField;
-    private JComboBox<String> exerciseDropdown;
+public class FitnessTrackerEnhancedUI extends JFrame {
+    private JTextField durationField;
     private JTextArea outputArea;
-    private User user;
+    private JComboBox<User> userDropdown;
+    private JComboBox<String> exerciseDropdown;
     private DefaultListModel<String> workoutListModel;
-    private Random random = new Random();
+    private List<User> users;
+    private User currentUser;
 
-    public FitnessTrackerEnhancedUIWithGoalsAndGraphs() {
+    public FitnessTrackerEnhancedUI() {
+        users = new ArrayList<>();
         setTitle("Fitness Tracker");
-        setSize(700, 600);
+        setSize(600, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -90,68 +93,73 @@ public class FitnessTrackerEnhancedUIWithGoalsAndGraphs extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         // Create input fields and labels
-        JLabel nameLabel = new JLabel("Name:");
-        nameField = new JTextField();
+        JLabel userLabel = new JLabel("Select User:");
+        userDropdown = new JComboBox<>();
+        userDropdown.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                currentUser = (User) userDropdown.getSelectedItem();
+                if (currentUser != null) {
+                    outputArea.setText("Switched to user: " + currentUser.name);
+                }
+            }
+        });
+
         JLabel exerciseLabel = new JLabel("Exercise:");
+        // Replacing the text field for exercises with a dropdown
         exerciseDropdown = new JComboBox<>(new String[]{"Walking", "Running", "Yoga", "Sports", "Swimming", "Cycling", "Hiking/Trekking"});
+
         JLabel durationLabel = new JLabel("Duration (mins):");
         durationField = new JTextField();
 
-        // Goal inputs
-        JLabel durationGoalLabel = new JLabel("Weekly Duration Goal (mins):");
-        weeklyDurationGoalField = new JTextField();
-        JLabel caloriesGoalLabel = new JLabel("Weekly Calories Goal:");
-        weeklyCaloriesGoalField = new JTextField();
-
         // Add input fields and labels to input panel
-        gbc.gridx = 0; gbc.gridy = 0;
-        inputPanel.add(nameLabel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        inputPanel.add(userLabel, gbc);
         gbc.gridx = 1;
-        inputPanel.add(nameField, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 1;
+        inputPanel.add(userDropdown, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         inputPanel.add(exerciseLabel, gbc);
         gbc.gridx = 1;
-        inputPanel.add(exerciseDropdown, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 2;
+        inputPanel.add(exerciseDropdown, gbc); // Use dropdown here instead of text field
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         inputPanel.add(durationLabel, gbc);
         gbc.gridx = 1;
         inputPanel.add(durationField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 3;
-        inputPanel.add(durationGoalLabel, gbc);
-        gbc.gridx = 1;
-        inputPanel.add(weeklyDurationGoalField, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 4;
-        inputPanel.add(caloriesGoalLabel, gbc);
-        gbc.gridx = 1;
-        inputPanel.add(weeklyCaloriesGoalField, gbc);
-
         // Create buttons
-        JButton logButton = new JButton("Log Workout");
+        JButton logButton = new JButton("Record Workout");
         JButton progressButton = new JButton("View Progress");
-        JButton goalButton = new JButton("Check Goals");
-        JButton graphButton = new JButton("Show Graph");
+        JButton clearButton = new JButton("Clear History");
+        JButton exportButton = new JButton("Export Workouts");
+        JButton addUserButton = new JButton("Add User");
 
         // Add buttons to input panel
-        gbc.gridx = 0; gbc.gridy = 5;
+        gbc.gridx = 0;
+        gbc.gridy = 3;
         inputPanel.add(logButton, gbc);
         gbc.gridx = 1;
         inputPanel.add(progressButton, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 6;
-        inputPanel.add(goalButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        inputPanel.add(clearButton, gbc);
         gbc.gridx = 1;
-        inputPanel.add(graphButton, gbc);
+        inputPanel.add(exportButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        inputPanel.add(addUserButton, gbc);
 
         // Workout history display panel
         workoutListModel = new DefaultListModel<>();
         JList<String> workoutList = new JList<>(workoutListModel);
         JScrollPane workoutListScrollPane = new JScrollPane(workoutList);
         workoutListScrollPane.setPreferredSize(new Dimension(200, 300));
-        
+
         // Output area for text
         outputArea = new JTextArea(10, 30);
         outputArea.setEditable(false);
@@ -177,17 +185,24 @@ public class FitnessTrackerEnhancedUIWithGoalsAndGraphs extends JFrame {
             }
         });
 
-        goalButton.addActionListener(new ActionListener() {
+        clearButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                checkGoals();
+                clearHistory();
             }
         });
 
-        graphButton.addActionListener(new ActionListener() {
+        exportButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                showWorkoutGraph();
+                exportWorkoutHistory();
+            }
+        });
+
+        addUserButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                addUser();
             }
         });
 
@@ -196,112 +211,112 @@ public class FitnessTrackerEnhancedUIWithGoalsAndGraphs extends JFrame {
 
     // Method to log the workout
     private void logWorkout() {
-        if (user == null) {
-            String name = nameField.getText().trim();
-            if (name.isEmpty()) {
-                outputArea.setText("Please enter your name first.");
-                return;
-            }
-            user = new User(name);
+        if (currentUser == null) {
+            outputArea.setText("Please select a user first.");
+            return;
         }
 
-        String exercise = (String) exerciseDropdown.getSelectedItem();
+        String exercise = (String) exerciseDropdown.getSelectedItem(); // Get selected exercise from dropdown
         String durationText = durationField.getText().trim();
 
-        if (exercise.isEmpty() || durationText.isEmpty()) {
-            outputArea.setText("Please fill in all workout details.");
+        if (durationText.isEmpty()) {
+            outputArea.setText("Please enter the workout duration.");
             return;
         }
 
         try {
             int duration = Integer.parseInt(durationText);
-            int calories = (int) (duration * getMET(exercise) * 3.5 * 70 / 200); // Example calorie calculation
+            int calories = calculateCalories(exercise, duration);
             Workout workout = new Workout(exercise, duration, calories);
-            user.logWorkout(workout);
+
+            currentUser.logWorkout(workout);
             workoutListModel.addElement(workout.toString());
-            outputArea.setText("Workout logged: " + workout);
+            outputArea.setText("Workout Recorded: " + workout);
             clearFields();
         } catch (NumberFormatException ex) {
             outputArea.setText("Please enter valid numbers for duration.");
         }
     }
 
-    // Example MET values for different exercises
-    private double getMET(String exercise) {
-        switch (exercise) {
-            case "Walking": return 3.8;
-            case "Running": return 9.8;
-            case "Yoga": return 2.5;
-            case "Sports": return 6.0;
-            case "Swimming": return 7.0;
-            case "Cycling": return 8.0;
-            case "Hiking/Trekking": return 6.5;
-            default: return 1.0;
+    // Method to calculate calories burned
+    private int calculateCalories(String exercise, int duration) {
+        int met = getMETValue(exercise);
+        return (int) (met * duration * 3.5 * 70 / 200); // 70 kg is the average weight
+    }
+
+    // Method to get MET value based on exercise type
+    private int getMETValue(String exercise) {
+        switch (exercise.toLowerCase()) {
+            case "walking":
+                return 3;
+            case "running":
+                return 7;
+            case "yoga":
+                return 2;
+            case "sports":
+                return 6;
+            case "swimming":
+                return 7;
+            case "cycling":
+                return 6;
+            case "hiking/trekking":
+                return 5;
+            default:
+                return 1;
         }
     }
 
     // Method to show progress
     private void showProgress() {
-        if (user == null) {
-            outputArea.setText("Please log a workout first.");
+        if (currentUser == null) {
+            outputArea.setText("Please select a user first.");
         } else {
-            outputArea.setText(user.getProgress());
+            outputArea.setText(currentUser.getProgress());
         }
     }
 
-    // Method to check goals
-    private void checkGoals() {
-        if (user == null) {
-            outputArea.setText("Please log a workout first.");
-            return;
+    // Method to clear the workout history
+    private void clearHistory() {
+        if (currentUser != null) {
+            workoutListModel.clear();
+            currentUser.workoutLog.clear();
+            outputArea.setText("Workout history cleared.");
         }
-
-        int totalDuration = user.getWorkoutLog().stream().mapToInt(w -> w.duration).sum();
-        int totalCalories = user.getWorkoutLog().stream().mapToInt(w -> w.caloriesBurned).sum();
-
-        int durationGoal = Integer.parseInt(weeklyDurationGoalField.getText());
-        int caloriesGoal = Integer.parseInt(weeklyCaloriesGoalField.getText());
-
-        StringBuilder goalStatus = new StringBuilder("Goal Progress:\n");
-        goalStatus.append("Total Duration: ").append(totalDuration).append(" mins (Goal: ").append(durationGoal).append(" mins)\n");
-        goalStatus.append("Total Calories: ").append(totalCalories).append(" cal (Goal: ").append(caloriesGoal).append(" cal)\n");
-
-        outputArea.setText(goalStatus.toString());
     }
 
-    // Method to show the workout graph
-    private void showWorkoutGraph() {
-        if (user == null || user.getWorkoutLog().isEmpty()) {
-            outputArea.setText("No workouts to display in the graph.");
-            return;
+    // Method to export workout history to a file
+    private void exportWorkoutHistory() {
+        if (currentUser != null && !currentUser.getWorkoutLog().isEmpty()) {
+            try (FileWriter writer = new FileWriter("workout_history.txt")) {
+                for (Workout workout : currentUser.getWorkoutLog()) {
+                    writer.write(workout.toString() + "\n");
+                }
+                outputArea.setText("Workout history exported to workout_history.txt");
+            } catch (IOException e) {
+                outputArea.setText("Error encountered. Please try again.");
+            }
+        } else {
+            outputArea.setText("Add workouts to export.");
         }
-
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-
-        for (Workout workout : user.getWorkoutLog()) {
-            dataset.addValue(workout.duration, "Duration", workout.exerciseName);
-        }
-
-        JFreeChart lineChart = ChartFactory.createLineChart(
-            "Workout Duration Over Time",
-            "Exercise",
-            "Duration (mins)",
-            dataset
-        );
-
-        ChartPanel chartPanel = new ChartPanel(lineChart);
-        JFrame chartFrame = new JFrame("Workout Graph");
-        chartFrame.setContentPane(chartPanel);
-        chartFrame.pack();
-        chartFrame.setVisible(true);
     }
 
-    // Clear input fields
+    // Method to clear input fields
     private void clearFields() {
         durationField.setText("");
     }
 
+    // Method to add a user
+    private void addUser() {
+        String name = JOptionPane.showInputDialog(this, "Enter user name:");
+        if (name != null && !name.trim().isEmpty()) {
+            User newUser = new User(name.trim());
+            users.add(newUser);
+            userDropdown.addItem(newUser);
+            outputArea.setText("User added: " + name);
+        }
+    }
+
     public static void main(String[] args) {
-        new FitnessTrackerEnhancedUIWithGoalsAndGraphs();
+        new FitnessTrackerEnhancedUI();
     }
 }
