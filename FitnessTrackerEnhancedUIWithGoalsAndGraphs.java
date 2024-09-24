@@ -71,7 +71,7 @@ class User {
 
 // Main class for the fitness tracker UI
 public class FitnessTrackerEnhancedUI extends JFrame {
-    private JTextField exerciseField, durationField;
+    private JTextField durationField;
     private JTextArea outputArea;
     private JComboBox<User> userDropdown;
     private JComboBox<String> exerciseDropdown;
@@ -136,6 +136,7 @@ public class FitnessTrackerEnhancedUI extends JFrame {
         JButton clearButton = new JButton("Clear History");
         JButton exportButton = new JButton("Export Workouts");
         JButton addUserButton = new JButton("Add User");
+        JButton workoutIdeasButton = new JButton("Get Workout Ideas"); // New button for workout ideas
 
         // Add buttons to input panel
         gbc.gridx = 0; gbc.gridy = 3;
@@ -150,6 +151,9 @@ public class FitnessTrackerEnhancedUI extends JFrame {
 
         gbc.gridx = 0; gbc.gridy = 5;
         inputPanel.add(addUserButton, gbc);
+
+        gbc.gridx = 1; gbc.gridy = 6;
+        inputPanel.add(workoutIdeasButton, gbc); // Add the workout ideas button
 
         // Workout history display panel
         workoutListModel = new DefaultListModel<>();
@@ -200,6 +204,13 @@ public class FitnessTrackerEnhancedUI extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 addUser();
+            }
+        });
+
+        workoutIdeasButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showWorkoutIdeas(); // Action for the workout ideas button
             }
         });
 
@@ -299,7 +310,6 @@ public class FitnessTrackerEnhancedUI extends JFrame {
 
     // Method to clear input fields
     private void clearFields() {
-        exerciseField.setText("");
         durationField.setText("");
     }
 
@@ -324,6 +334,25 @@ public class FitnessTrackerEnhancedUI extends JFrame {
                 outputArea.setText("Please provide a valid name.");
             }
         }
+    }
+
+    // Method to show basic workout ideas in a new window
+    private void showWorkoutIdeas() {
+        JFrame ideasFrame = new JFrame("Basic Workout Ideas");
+        ideasFrame.setSize(300, 200);
+        ideasFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+        JTextArea ideasText = new JTextArea();
+        ideasText.setEditable(false);
+        ideasText.setText("Here are some workout ideas:\n\n"
+                + "- Pushups: 3 sets of 15\n"
+                + "- Squats: 3 sets of 20\n"
+                + "- Planks: Hold for 1 minute\n"
+                + "- Jumping jacks: 3 sets of 30\n"
+                + "- Running: 20 minutes at moderate pace\n");
+
+        ideasFrame.add(new JScrollPane(ideasText));
+        ideasFrame.setVisible(true);
     }
 
     // Main method to start the application
